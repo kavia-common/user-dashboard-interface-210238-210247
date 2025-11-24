@@ -80,7 +80,6 @@ function applyProps(el, props = {}) {
         el.setAttribute('style', value);
       } else if (value && typeof value === 'object') {
         for (const [prop, val] of Object.entries(value)) {
-          // eslint-disable-next-line no-param-reassign
           el.style[prop] = val;
         }
       }
