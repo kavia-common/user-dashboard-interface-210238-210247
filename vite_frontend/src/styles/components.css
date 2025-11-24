@@ -71,98 +71,135 @@
   font-size: var(--text-lg);
 }
 
-/* Navigation items (sidebar) */
+/* Sidebar Navigation, matching design notes */
 .nav {
-  display: grid;
-  gap: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* list gap */
 }
+
+/* Section header text (uppercase) */
+.nav-section-title {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: rgba(255,255,255,0.70);
+  margin: 16px 12px 8px;
+}
+
+/* Single row items */
 .nav-item {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  color: var(--color-text);
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: var(--sidebar-item-inactive-text);
   text-decoration: none;
-  transition: background-color 120ms ease, color 120ms ease;
+  position: relative;
+  gap: 12px; /* icon-label gap */
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  transition: background-color 120ms ease, color 120ms ease, opacity 120ms ease;
 }
+
+/* Icons within items */
+.nav-item .icon {
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+  opacity: 0.9; /* inactive icon */
+  flex: 0 0 20px;
+}
+
+/* Hover (non-active) */
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: var(--sidebar-item-hover);
+  color: #FFFFFF;
 }
-.nav-item:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
+
+/* Focus visible for accessibility */
+.nav-item:focus-visible,
+.nav-toggle button:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.9);
+  outline-offset: 2px;
 }
+
+/* Active state */
 .nav-item.active {
-  background: linear-gradient(90deg, rgba(30,58,138,0.08), rgba(245,158,11,0.08));
-  color: var(--color-primary);
-  font-weight: 700;
-  border: 1px solid rgba(30, 58, 138, 0.2);
-}
-
-/* Badges */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: var(--text-xs);
-  line-height: 1.4;
-  border: 1px solid var(--border-color);
-  background: var(--color-surface);
-  color: var(--color-text);
-}
-.badge.success {
-  background: rgba(5, 150, 105, 0.1);
-  border-color: rgba(5, 150, 105, 0.3);
-  color: var(--color-success);
-}
-.badge.error {
-  background: rgba(220, 38, 38, 0.1);
-  border-color: rgba(220, 38, 38, 0.3);
-  color: var(--color-error);
-}
-.badge.secondary {
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.3);
-  color: #8a5a00;
-}
-
-/* Form basics */
-.input,
-.select,
-.textarea {
-  display: block;
-  width: 100%;
-  background: var(--color-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  font-size: var(--text-sm);
-  color: var(--color-text);
-  transition: border-color 120ms ease, box-shadow 120ms ease;
-}
-
-.input:focus,
-.select:focus,
-.textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: var(--focus-ring);
-}
-
-.input[aria-invalid="true"],
-.textarea[aria-invalid="true"],
-.select[aria-invalid="true"] {
-  border-color: var(--color-error);
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
-}
-
-.label {
-  display: inline-block;
-  margin-bottom: var(--space-2);
+  background: var(--sidebar-active-bg);
+  color: #FFFFFF;
   font-weight: 600;
-  font-size: var(--text-sm);
+}
+.nav-item.active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--sidebar-active-indicator);
+  border-radius: 1px;
+}
+
+/* Group container and toggle */
+.nav-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Parent row + toggle chevron wrapper */
+.nav-toggle {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 8px 0 0; /* chevron button has its own padding */
+}
+
+/* Make the parent anchor look like a nav-item but share the row with toggle */
+.nav-toggle > a.nav-item {
+  flex: 1 1 auto;
+  margin-right: 4px;
+}
+
+/* Chevron button minimal */
+.nav-toggle button {
+  background: transparent;
+  border: 0;
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
+  height: 32px;
+  width: 32px;
+  border-radius: 6px;
+}
+.nav-toggle button:hover {
+  background: var(--sidebar-item-hover);
+  color: #FFFFFF;
+}
+
+/* Children list */
+.nav-group {
+  padding-left: 0;
+  margin-left: 0;
+}
+
+/* Children UL reset */
+.nav-group > ul.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Child items indent slightly */
+.nav-group > ul.nav > li > a.nav-item {
+  padding-left: 36px; /* visual indent to align labels */
 }
 
 /* Header actions alignment helpers */

@@ -35,6 +35,21 @@
   --text-xl: 20px;
   --text-2xl: 24px;
   --leading-normal: 1.5;
+
+  /* Sidebar Design Tokens (from design notes) */
+  --sidebar-bg-start: #0F84C6;
+  --sidebar-bg-end:   #1EA1DA;
+  --sidebar-bg: linear-gradient(180deg, var(--sidebar-bg-start) 0%, var(--sidebar-bg-end) 100%);
+
+  --sidebar-item-text: #FFFFFF;
+  --sidebar-item-icon: #FFFFFF;
+  --sidebar-item-inactive-text: rgba(255,255,255,0.85);
+  --sidebar-divider: rgba(255,255,255,0.15);
+  --sidebar-item-hover: rgba(255,255,255,0.12);
+  --sidebar-active-bg: rgba(255,255,255,0.12);
+  --sidebar-active-indicator: #FFFFFF;
+  --sidebar-badge-bg: rgba(255,255,255,0.20);
+  --sidebar-shadow: rgba(0,0,0,0.10);
 }
 
 body {
