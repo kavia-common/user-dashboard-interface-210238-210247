@@ -107,6 +107,7 @@ function renderRoute() {
       return;
     }
     if (path === '/status' || path.startsWith('/status/')) {
+      // Render Status page; subroutes like /status/lan, /status/wan, etc. are handled generically
       StatusPage.render(mainRoot, { t, onLanguageChange });
       return;
     }
@@ -123,6 +124,7 @@ function renderRoute() {
       return;
     }
     if (path === '/application' || path.startsWith('/application/')) {
+      // For application upnp leaf, still reuse application renderer with a sub param if present
       const sub = path.split('/')[2] || 'preferences';
       ApplicationPage.render(mainRoot, { ...route.params, sub }, { t, onLanguageChange });
       return;

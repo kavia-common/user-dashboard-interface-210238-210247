@@ -28,58 +28,87 @@ const STORAGE_KEYS = Object.freeze({
   expanded: 'expanded', // JSON object map of { groupId: boolean }
 });
 
-// Route map describing the sidebar structure
+/**
+ * Route map describing the sidebar structure per request:
+ * - Home (/home)
+ * - Status (/status)
+ *    - LAN (/status/lan)
+ *    - WAN (/status/wan)
+ *    - WLAN (/status/wlan)
+ *    - DHCP (/status/dhcp)
+ *    - Log (/status/log)
+ * - Basic Settings (/basic)
+ *    - LAN (/basic/lan)
+ *    - WAN (/basic/wan)
+ *    - WLAN (/basic/wlan)
+ *    - DHCP (/basic/dhcp)
+ * - Advanced Settings (/advanced)
+ *    - Service Control (/advanced/service-control)
+ *    - DDNS (/advanced/ddns)
+ *    - DMZ (/advanced/dmz)
+ * - Management (/management)
+ *    - NTP (/management/ntp)
+ *    - SSH (/management/ssh)
+ *    - Firmware Upgrade (/management/firmware)
+ * - Application (/application)
+ *    - UPnP (/application/upnp)
+ */
 const NAV_STRUCTURE = [
+  { type: 'link', id: 'home', labelKey: 'navigation.home', path: '/home' },
   {
-    type: 'link',
-    id: 'home',
-    labelKey: 'navigation.home',
-    path: '/home',
-  },
-  {
-    type: 'link',
+    type: 'group-link',
     id: 'status',
     labelKey: 'navigation.status',
     path: '/status',
+    children: [
+      { id: 'status-lan', labelKey: 'navigation.statusLan', path: '/status/lan' },
+      { id: 'status-wan', labelKey: 'navigation.statusWan', path: '/status/wan' },
+      { id: 'status-wlan', labelKey: 'navigation.statusWlan', path: '/status/wlan' },
+      { id: 'status-dhcp', labelKey: 'navigation.statusDhcp', path: '/status/dhcp' },
+      { id: 'status-log', labelKey: 'navigation.statusLog', path: '/status/log' },
+    ],
   },
   {
-    type: 'group',
+    type: 'group-link',
     id: 'basic',
     labelKey: 'navigation.basicSettings',
+    path: '/basic',
     children: [
-      { id: 'profile', label: 'Profile', path: '/basic/profile' },
-      { id: 'network', label: 'Network', path: '/basic/network' },
-      { id: 'display', label: 'Display', path: '/basic/display' },
+      { id: 'basic-lan', labelKey: 'navigation.basicLan', path: '/basic/lan' },
+      { id: 'basic-wan', labelKey: 'navigation.basicWan', path: '/basic/wan' },
+      { id: 'basic-wlan', labelKey: 'navigation.basicWlan', path: '/basic/wlan' },
+      { id: 'basic-dhcp', labelKey: 'navigation.basicDhcp', path: '/basic/dhcp' },
     ],
   },
   {
-    type: 'group',
+    type: 'group-link',
     id: 'advanced',
     labelKey: 'navigation.advancedSettings',
+    path: '/advanced',
     children: [
-      { id: 'security', label: 'Security', path: '/advanced/security' },
-      { id: 'integrations', label: 'Integrations', path: '/advanced/integrations' },
-      { id: 'logs', label: 'Logs', path: '/advanced/logs' },
+      { id: 'advanced-service', labelKey: 'navigation.advancedServiceControl', path: '/advanced/service-control' },
+      { id: 'advanced-ddns', labelKey: 'navigation.advancedDdns', path: '/advanced/ddns' },
+      { id: 'advanced-dmz', labelKey: 'navigation.advancedDmz', path: '/advanced/dmz' },
     ],
   },
   {
-    type: 'group',
+    type: 'group-link',
     id: 'management',
     labelKey: 'navigation.management',
+    path: '/management',
     children: [
-      { id: 'users', label: 'Users', path: '/management/users' },
-      { id: 'roles', label: 'Roles', path: '/management/roles' },
-      { id: 'system', label: 'System', path: '/management/system' },
+      { id: 'mgmt-ntp', labelKey: 'navigation.managementNtp', path: '/management/ntp' },
+      { id: 'mgmt-ssh', labelKey: 'navigation.managementSsh', path: '/management/ssh' },
+      { id: 'mgmt-firmware', labelKey: 'navigation.managementFirmware', path: '/management/firmware' },
     ],
   },
   {
-    type: 'group',
+    type: 'group-link',
     id: 'application',
     labelKey: 'navigation.application',
+    path: '/application',
     children: [
-      { id: 'preferences', label: 'Preferences', path: '/application/preferences' },
-      { id: 'updates', label: 'Updates', path: '/application/updates' },
-      { id: 'about', label: 'About', path: '/application/about' },
+      { id: 'app-upnp', labelKey: 'navigation.applicationUpnp', path: '/application/upnp' },
     ],
   },
 ];
@@ -111,18 +140,31 @@ function isPathActive(itemPath, routePath) {
 /**
  * Build a group section DOM node.
  */
-function buildGroup({ id, label, children }, expanded, routePath) {
+function buildGroupLink({ id, label, path, children }, expanded, routePath) {
   const groupId = `group-${id}`;
   const panelId = `panel-${id}`;
   const isOpen = !!expanded[id];
 
-  const button = create('button', {
-    class: ['nav-item', 'nav-toggle', isOpen ? 'is-open' : ''].join(' '),
-    type: 'button',
-    'aria-expanded': String(isOpen),
-    'aria-controls': panelId,
-    'data-group-id': id,
-  }, label);
+  const activeParent = isPathActive(path, routePath);
+  // Parent acts as a link and as a toggle; space/enter or click on chevron toggles, clicking text navigates.
+  const header = create('div', { class: 'nav-item nav-toggle ' + (isOpen ? 'is-open' : ''), role: 'group' },
+    create('a', {
+      href: `#${path}`,
+      class: ['nav-item', activeParent ? 'active' : ''].join(' '),
+      'aria-current': activeParent ? 'page' : null,
+      'data-path': path,
+      style: { flex: '1', padding: 0, background: 'transparent' },
+    }, label),
+    create('button', {
+      type: 'button',
+      class: 'btn btn-ghost',
+      'aria-expanded': String(isOpen),
+      'aria-controls': panelId,
+      'data-group-id': id,
+      'aria-label': 'Toggle',
+      style: { padding: '6px 8px', marginLeft: 'auto' },
+    }, isOpen ? '▾' : '▸'),
+  );
 
   const list = create('div', {
     id: panelId,
@@ -149,7 +191,7 @@ function buildGroup({ id, label, children }, expanded, routePath) {
   list.appendChild(ul);
 
   const wrapper = create('div', { class: 'nav-section', id: groupId },
-    button,
+    header,
     list
   );
   return wrapper;
@@ -183,20 +225,19 @@ function renderSidebar(container, i18n, route) {
         label: i18n && typeof i18n.t === 'function' ? i18n.t(entry.labelKey) : entry.id,
         path: entry.path,
       }, routePath));
-    } else if (entry.type === 'group') {
+    } else if (entry.type === 'group-link') {
       const label = i18n && typeof i18n.t === 'function' ? i18n.t(entry.labelKey) : entry.id;
-
       const children = entry.children.map((c) => ({
         ...c,
-        // Labels for child items are given as plain strings in requirements
-        label: c.label,
+        label: i18n && typeof i18n.t === 'function' ? i18n.t(c.labelKey) : c.id,
       }));
-
-      nodes.push(buildGroup({
-        id: entry.id,
-        label,
-        children,
-      }, expanded, routePath));
+      nodes.push(
+        buildGroupLink(
+          { id: entry.id, label, path: entry.path, children },
+          expanded,
+          routePath,
+        )
+      );
     }
   }
 
@@ -215,7 +256,7 @@ function renderSidebar(container, i18n, route) {
  */
 function attachBehaviors(container, router) {
   // Toggle expand/collapse for groups using event delegation
-  const unsubscribeClick = delegate(container, 'click', '.nav-toggle', (evt, target) => {
+  const unsubscribeClick = delegate(container, 'click', '.nav-toggle button[data-group-id]', (evt, target) => {
     evt.preventDefault();
     const groupId = target.getAttribute('data-group-id');
     if (!groupId) return;
@@ -230,7 +271,11 @@ function attachBehaviors(container, router) {
     const panelId = target.getAttribute('aria-controls');
     const panel = panelId ? qs(`#${panelId}`, container) : null;
     target.setAttribute('aria-expanded', String(next));
-    target.classList.toggle('is-open', next);
+    // toggle chevron
+    target.textContent = next ? '▾' : '▸';
+    // add/remove is-open on parent header wrapper
+    const header = target.closest('.nav-toggle');
+    if (header) header.classList.toggle('is-open', next);
     if (panel) {
       if (next) panel.removeAttribute('hidden');
       else panel.setAttribute('hidden', '');
@@ -238,7 +283,7 @@ function attachBehaviors(container, router) {
   });
 
   // Keyboard support for toggles
-  const unsubscribeKey = delegate(container, 'keydown', '.nav-toggle', (evt, target) => {
+  const unsubscribeKey = delegate(container, 'keydown', '.nav-toggle button[data-group-id]', (evt, target) => {
     const key = evt.key;
     const groupId = target.getAttribute('data-group-id');
     if (!groupId) return;

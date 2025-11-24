@@ -14,7 +14,8 @@
   position: sticky;
   top: 0;
   height: 100vh;
-  background: var(--color-surface);
+  /* Light blue gradient with Ocean palette hues; subtle for readability */
+  background: linear-gradient(180deg, rgba(30, 58, 138, 0.08) 0%, rgba(59, 130, 246, 0.12) 100%);
   border-right: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   padding: var(--space-6) var(--space-4);
