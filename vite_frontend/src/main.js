@@ -36,11 +36,20 @@ function initAppShell() {
 initAppShell();
 
 // Mount sidebar and header with router + i18n
-import { initRouter, navigate } from './router.js';
+import { initRouter, navigate, onRouteChange, getRoute } from './router.js';
 import { initI18n, t, setLanguage, getLanguage, onLanguageChange, offLanguageChange } from './i18n/translations.js';
 import { initSidebar } from './components/sidebar.js';
 import { initHeader } from './components/header.js';
 import { createStorage } from './utils/storage.js';
+
+// Pages
+import * as HomePage from './pages/home.js';
+import * as StatusPage from './pages/status.js';
+import * as BasicSettingsPage from './pages/basic-settings.js';
+import * as AdvancedSettingsPage from './pages/advanced-settings.js';
+import * as ManagementPage from './pages/management.js';
+import * as ApplicationPage from './pages/application.js';
+import * as NotFoundPage from './pages/not-found.js';
 
 // Initialize storage
 const storage = createStorage('app');
@@ -83,3 +92,66 @@ if (headerRoot) {
     storage,
   });
 }
+
+// Route-to-page rendering
+const mainRoot = document.querySelector('.main');
+
+// PUBLIC_INTERFACE
+function renderRoute() {
+  /** Render the page module based on current hash route. */
+  if (!mainRoot) return;
+  const route = getRoute();
+  const path = route.path || '/home';
+
+  // Determine base and sub for application routes
+  // Match order matters; more specific prefixes first
+  try {
+    if (path === '/home') {
+      HomePage.render(mainRoot, { t, onLanguageChange });
+      return;
+    }
+    if (path === '/status' || path.startsWith('/status/')) {
+      StatusPage.render(mainRoot, { t, onLanguageChange });
+      return;
+    }
+    if (path === '/basic' || path.startsWith('/basic/')) {
+      BasicSettingsPage.render(mainRoot, { t, onLanguageChange });
+      return;
+    }
+    if (path === '/advanced' || path.startsWith('/advanced/')) {
+      AdvancedSettingsPage.render(mainRoot, { t, onLanguageChange });
+      return;
+    }
+    if (path === '/management' || path.startsWith('/management/')) {
+      ManagementPage.render(mainRoot, { t, onLanguageChange });
+      return;
+    }
+    if (path === '/application' || path.startsWith('/application/')) {
+      // sub route can be preferences|updates|about
+      const sub = path.split('/')[2] || 'preferences';
+      ApplicationPage.render(mainRoot, { ...route.params, sub }, { t, onLanguageChange });
+      return;
+    }
+    // Fallback
+    NotFoundPage.render(mainRoot, { t, onLanguageChange });
+  } catch (err) {
+    // On unexpected render error, show a minimal fallback
+    mainRoot.innerHTML = `
+      <section class="card">
+        <div class="card-header">An error occurred</div>
+        <p class="u-muted">Please navigate to another page.</p>
+      </section>
+    `;
+    const g = typeof globalThis !== 'undefined' ? globalThis : {};
+    const c = g.console || null;
+    if (c && typeof c.error === 'function') {
+      c.error('Render error:', err);
+    }
+  }
+}
+
+// Register router listener
+onRouteChange(() => renderRoute());
+
+// Initial render
+renderRoute();
