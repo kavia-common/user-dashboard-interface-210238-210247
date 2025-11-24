@@ -1,0 +1,100 @@
+.app-shell {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: grid;
+  /* Sidebar width is 260px on desktop */
+  grid-template-columns: 260px 1fr;
+  grid-template-rows: auto;
+  background: var(--color-bg);
+}
+
+/* Sidebar */
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: var(--color-surface);
+  border-right: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6) var(--space-4);
+  overflow-y: auto;
+}
+
+/* Content area */
+.content {
+  min-width: 0; /* prevent overflow on flex/grid children */
+  display: grid;
+  grid-template-rows: 64px 1fr;
+}
+
+/* Header bar */
+.header {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4);
+  padding: 0 var(--space-6);
+}
+
+/* Main content area */
+.main {
+  padding: var(--space-6);
+  min-height: 0;
+}
+
+/* Subtle scrollbar styling */
+.sidebar::-webkit-scrollbar,
+.main::-webkit-scrollbar {
+  width: 10px;
+}
+.sidebar::-webkit-scrollbar-thumb,
+.main::-webkit-scrollbar-thumb {
+  background: rgba(17, 24, 39, 0.14);
+  border-radius: 8px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover,
+.main::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 24, 39, 0.24);
+}
+
+/* Responsive behavior: collapse sidebar width on narrow screens */
+@media (max-width: 960px) {
+  .app-shell {
+    grid-template-columns: 80px 1fr;
+  }
+  .sidebar {
+    padding: var(--space-4) var(--space-3);
+  }
+}
+
+/* Very narrow: stack header and allow sidebar to overlay (future JS can toggle) */
+@media (max-width: 640px) {
+  .app-shell {
+    display: block;
+  }
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform 200ms ease;
+    z-index: 30;
+  }
+  .sidebar.is-open {
+    transform: translateX(0);
+  }
+  .content {
+    display: grid;
+    grid-template-rows: 56px 1fr;
+  }
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+}
