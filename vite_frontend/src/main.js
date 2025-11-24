@@ -34,3 +34,52 @@ function initAppShell() {
 }
 
 initAppShell();
+
+// Mount sidebar and header with router + i18n
+import { initRouter, navigate } from './router.js';
+import { initI18n, t, setLanguage, getLanguage, onLanguageChange, offLanguageChange } from './i18n/translations.js';
+import { initSidebar } from './components/sidebar.js';
+import { initHeader } from './components/header.js';
+import { createStorage } from './utils/storage.js';
+
+// Initialize storage
+const storage = createStorage('app');
+
+// Initialize i18n with storage-like adapter
+initI18n({
+  getItem: (k) => storage.get(k.replace('app:', ''), null),
+  setItem: (k, v) => storage.set(k.replace('app:', ''), v),
+});
+
+// Initialize router and mount components
+initRouter({ defaultRoute: '/home' });
+
+// Sidebar
+const sidebarRoot = document.querySelector('.sidebar');
+if (sidebarRoot) {
+  const routerAdapter = {
+    getRoute: () => {
+      const hash = (typeof globalThis !== 'undefined' && globalThis.location && globalThis.location.hash) ? globalThis.location.hash : '';
+      const path = hash ? hash.replace(/^#/, '') : '/home';
+      return { path };
+    },
+    onRouteChange: (cb) => {
+      // Hook to the router's onRouteChange via event listener on hashchange
+      if (typeof cb !== 'function') return;
+      if (typeof globalThis !== 'undefined' && globalThis.addEventListener) {
+        globalThis.addEventListener('hashchange', () => cb(routerAdapter.getRoute()));
+      }
+    },
+  };
+  initSidebar(sidebarRoot, routerAdapter, { t, onLanguageChange });
+}
+
+// Header
+const headerRoot = document.querySelector('.header');
+if (headerRoot) {
+  initHeader(headerRoot, {
+    i18n: { t, setLanguage, getLanguage, onLanguageChange, offLanguageChange },
+    router: { navigate },
+    storage,
+  });
+}
