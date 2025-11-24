@@ -171,3 +171,6 @@
   align-items: center;
   gap: var(--space-3);
 }
+.header .badge.secondary {
+  margin-right: var(--space-2);
+}

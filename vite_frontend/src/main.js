@@ -4,13 +4,10 @@ import './styles/layout.css';
 import './styles/components.css';
 
 /**
- * Initialize the app shell.
- * We only create the structural containers here:
- * - .app-shell: root layout wrapper
- * - .sidebar: fixed left navigation container (empty for now)
- * - .content: right area that holds header and main
- * - .header: top bar with controls (to be mounted by future code)
- * - .main: central page content area (blank placeholder)
+ * Initialize the app shell structure:
+ * - Left sidebar
+ * - Top header
+ * - Main content area
  */
 function initAppShell() {
   const root = document.querySelector('#app');
@@ -18,16 +15,10 @@ function initAppShell() {
 
   root.innerHTML = `
     <div class="app-shell">
-      <aside class="sidebar" aria-label="Primary">
-        <!-- Sidebar navigation will mount here -->
-      </aside>
+      <aside class="sidebar" aria-label="Primary"></aside>
       <div class="content">
-        <header class="header" role="banner" aria-label="Top Bar">
-          <!-- Language / Account / Logout controls will mount here -->
-        </header>
-        <main class="main" role="main" tabindex="-1">
-          <!-- Page content will render here -->
-        </main>
+        <header class="header" role="banner" aria-label="Top Bar"></header>
+        <main class="main" role="main" tabindex="-1" aria-live="polite"></main>
       </div>
     </div>
   `;
@@ -35,7 +26,7 @@ function initAppShell() {
 
 initAppShell();
 
-// Mount sidebar and header with router + i18n
+// Router + i18n + components
 import { initRouter, navigate, onRouteChange, getRoute } from './router.js';
 import { initI18n, t, setLanguage, getLanguage, onLanguageChange, offLanguageChange } from './i18n/translations.js';
 import { initSidebar } from './components/sidebar.js';
@@ -54,36 +45,42 @@ import * as NotFoundPage from './pages/not-found.js';
 // Initialize storage
 const storage = createStorage('app');
 
-// Initialize i18n with storage-like adapter
+// Initialize i18n with persistent storage adapter
 initI18n({
   getItem: (k) => storage.get(k.replace('app:', ''), null),
   setItem: (k, v) => storage.set(k.replace('app:', ''), v),
 });
 
-// Initialize router and mount components
+// Initialize router
 initRouter({ defaultRoute: '/home' });
 
-// Sidebar
+// Sidebar wiring
 const sidebarRoot = document.querySelector('.sidebar');
 if (sidebarRoot) {
+  // Adapter provides the minimal API used by sidebar for active highlighting
   const routerAdapter = {
     getRoute: () => {
-      const hash = (typeof globalThis !== 'undefined' && globalThis.location && globalThis.location.hash) ? globalThis.location.hash : '';
-      const path = hash ? hash.replace(/^#/, '') : '/home';
-      return { path };
+      try {
+        const hash = globalThis?.location?.hash ?? '';
+        const path = hash ? hash.replace(/^#/, '') : '/home';
+        return { path };
+      } catch {
+        return { path: '/home' };
+      }
     },
     onRouteChange: (cb) => {
-      // Hook to the router's onRouteChange via event listener on hashchange
       if (typeof cb !== 'function') return;
-      if (typeof globalThis !== 'undefined' && globalThis.addEventListener) {
-        globalThis.addEventListener('hashchange', () => cb(routerAdapter.getRoute()));
-      }
+      // Listen to real router events so active state updates consistently
+      onRouteChange(() => cb(routerAdapter.getRoute()));
+    },
+    offRouteChange: () => {
+      // Sidebar doesn't use unsubscribe; safe no-op
     },
   };
   initSidebar(sidebarRoot, routerAdapter, { t, onLanguageChange });
 }
 
-// Header
+// Header wiring
 const headerRoot = document.querySelector('.header');
 if (headerRoot) {
   initHeader(headerRoot, {
@@ -93,18 +90,17 @@ if (headerRoot) {
   });
 }
 
-// Route-to-page rendering
+// Main route rendering
 const mainRoot = document.querySelector('.main');
 
 // PUBLIC_INTERFACE
 function renderRoute() {
-  /** Render the page module based on current hash route. */
+  /** Render the page module based on current hash route and re-wire language updates per page render. */
   if (!mainRoot) return;
   const route = getRoute();
   const path = route.path || '/home';
 
-  // Determine base and sub for application routes
-  // Match order matters; more specific prefixes first
+  // Render the matching page module
   try {
     if (path === '/home') {
       HomePage.render(mainRoot, { t, onLanguageChange });
@@ -127,7 +123,6 @@ function renderRoute() {
       return;
     }
     if (path === '/application' || path.startsWith('/application/')) {
-      // sub route can be preferences|updates|about
       const sub = path.split('/')[2] || 'preferences';
       ApplicationPage.render(mainRoot, { ...route.params, sub }, { t, onLanguageChange });
       return;
@@ -135,23 +130,22 @@ function renderRoute() {
     // Fallback
     NotFoundPage.render(mainRoot, { t, onLanguageChange });
   } catch (err) {
-    // On unexpected render error, show a minimal fallback
     mainRoot.innerHTML = `
-      <section class="card">
+      <section class="card" role="alert">
         <div class="card-header">An error occurred</div>
         <p class="u-muted">Please navigate to another page.</p>
       </section>
     `;
-    const g = typeof globalThis !== 'undefined' ? globalThis : {};
-    const c = g.console || null;
-    if (c && typeof c.error === 'function') {
-      c.error('Render error:', err);
-    }
+    const c = globalThis?.console;
+    if (c?.error) c.error('Render error:', err);
   }
 }
 
-// Register router listener
+// When route changes, render
 onRouteChange(() => renderRoute());
 
-// Initial render
+// Re-render current page on language change to update text
+onLanguageChange(() => renderRoute());
+
+// First render
 renderRoute();
